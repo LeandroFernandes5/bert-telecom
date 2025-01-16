@@ -1,6 +1,7 @@
 from transformers import DistilBertTokenizer, DistilBertForSequenceClassification
 import torch
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import logging
 import sys
@@ -9,7 +10,7 @@ app = FastAPI(title='api')
 
 # Load the fine-tuned model and tokenizer
 #model_path = "./distilbert-finetuned"  # Replace with the path where your model is saved
-model_path = "./distilbert-finetuned-fernando"
+model_path = "./distilbert-telecom-finetuned"
 
 tokenizer = DistilBertTokenizer.from_pretrained(model_path)
 model = DistilBertForSequenceClassification.from_pretrained(model_path)
@@ -28,10 +29,20 @@ stream_handler.setFormatter(file_formatter)
 logger.addHandler(file_handler)
 logger.addHandler(stream_handler)
 
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logging.error(f"Unhandled exception: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={"message": "Internal Server Error"}
+    )
+
+
 # Pydantic models
 class UserRequest(BaseModel):
   unique_id: int 
-  answer: str = Query(..., min_length=1, max_length=512, description="Text to classify")
+  answer: str = Query(..., min_length=1, max_length=1024, description="Text to classify")
 
 class ClassificationResponse(BaseModel):
     sentiment: int
