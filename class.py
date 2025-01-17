@@ -42,7 +42,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 # Pydantic models
 class UserRequest(BaseModel):
   unique_id: int 
-  answer: str = Query(..., min_length=1, max_length=1024, description="Text to classify")
+  answer: str = Query(..., min_length=1, max_length=4096, description="Text to classify")
 
 class ClassificationResponse(BaseModel):
     sentiment: int
