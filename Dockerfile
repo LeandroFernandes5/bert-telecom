@@ -31,8 +31,23 @@ RUN adduser \
     appuser
 
     
+# Set the cache directory to a location within /app
+ENV UV_CACHE_DIR=/app/.cache/uv
+
+# Ensure the cache directory is writable
+RUN mkdir -p /app/.cache/uv && \
+    chown -R appuser:appuser /app/.cache
+
 # Install uv.
 COPY --from=ghcr.io/astral-sh/uv:0.5.21 /uv /uvx /bin/
+
+# Install Streamlit and any other dependencies.
+RUN pip install streamlit
+
+# Copy the source code into the container.
+ADD . .
+
+RUN uv sync --frozen --no-cache
 
 # Download dependencies as a separate step to take advantage of Docker's caching.
 # Leverage a cache mount to /root/.cache/pip to speed up subsequent builds.
@@ -42,16 +57,21 @@ COPY --from=ghcr.io/astral-sh/uv:0.5.21 /uv /uvx /bin/
 #    --mount=type=bind,source=requirements.txt,target=requirements.txt \
 #    python -m pip install -r requirements.txt
 
-# Switch to the non-privileged user to run the application.
-#USER appuser
+# Install supervisord to manage multiple processes.
+RUN apt-get update && apt-get install -y supervisor
 
-# Copy the source code into the container.
-ADD . .
-
-RUN uv sync --frozen --no-cache
+# Create a configuration file for supervisord.
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Expose the port that the application listens on.
-EXPOSE 8001 
+EXPOSE 8001 8501
 
-# Run the application.
-CMD ["uv", "run", "class.py", "--host", "0.0.0.0", "--port", "8001"]
+# Ensure the log directory is writable
+RUN mkdir -p /app && \
+    chown -R appuser:appuser /app
+
+# Switch to the non-privileged user to run the application.
+USER appuser
+
+# Run supervisord to manage the processes.
+CMD ["/usr/bin/supervisord"]
