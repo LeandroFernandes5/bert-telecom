@@ -38,6 +38,14 @@ ENV UV_CACHE_DIR=/app/.cache/uv
 RUN mkdir -p /app/.cache/uv && \
     chown -R appuser:appuser /app/.cache
 
+
+# Set the cache directory for Hugging Face to a location within /app
+ENV TRANSFORMERS_CACHE=/app/.cache/huggingface
+
+# Ensure the cache directory is writable
+RUN mkdir -p /app/.cache/huggingface && \
+    chown -R appuser:appuser /app/.cache
+
 # Install uv.
 COPY --from=ghcr.io/astral-sh/uv:0.5.21 /uv /uvx /bin/
 

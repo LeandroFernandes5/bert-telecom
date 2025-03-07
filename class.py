@@ -16,7 +16,8 @@ tokenizer = DistilBertTokenizer.from_pretrained(model_path_nlp)
 model = DistilBertForSequenceClassification.from_pretrained(model_path_nlp)
 
 # Load finetuned identifier of at-risk customers
-model_path_at_risk = "/home/leo/projects/ollama-playground/train/distilbert-finetuned-at-risk"
+#model_path_at_risk = "/home/leo/projects/ollama-playground/train/distilbert-finetuned-at-risk"
+model_path_at_risk = "./distilbert-telecom-finetuned"
 
 tokenizer_at_risk = DistilBertTokenizer.from_pretrained(model_path_at_risk)
 model_at_risk = DistilBertForSequenceClassification.from_pretrained(model_path_at_risk)

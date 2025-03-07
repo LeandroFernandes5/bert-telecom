@@ -3,10 +3,10 @@ import requests
 import json
 
 # Set up the Streamlit UI
-st.title("Text Classification App")
+st.title("How was your International Roaming experience with Verizon service?")
 
 # Text input box
-user_input = st.text_area("Enter text to classify:")
+user_input = st.text_area("")
 
 # Button to trigger classification
 if st.button("Classify"):
