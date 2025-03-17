@@ -33,7 +33,7 @@ if st.button("Classify"):
                 color = "red"
             elif sentiment == 1:
                 sentiment_label = "Neutral"
-                color = "yellow"
+                color = "orange"
             elif sentiment == 2:
                 sentiment_label = "Positive"
                 color = "green"
