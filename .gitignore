@@ -174,3 +174,5 @@ cython_debug/
 nohup.out
 results/
 
+train/categorization/data
+train/categorization/models
