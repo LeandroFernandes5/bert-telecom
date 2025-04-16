@@ -4,7 +4,7 @@ import torch
 from transformers import BertTokenizer, BertForSequenceClassification, Trainer, TrainingArguments
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 import joblib
 
 # Get the script directory
