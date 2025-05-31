@@ -8,10 +8,65 @@ from transformers import (
     TrainingArguments,
 )
 import torch
+import os
+import glob
+import chardet
+import argparse # Added argparse
 
-# Load the dataset
-file_path = "leo_at_risk_answers.csv"
-data = pd.read_csv(file_path)
+folder_path = "datasets"
+
+def detect_encoding(file_path, num_bytes=10000):
+    with open(file_path, 'rb') as f:
+        rawdata = f.read()
+    result = chardet.detect(rawdata)
+    return result['encoding']
+
+# Argument parser setup
+parser = argparse.ArgumentParser(description="Fine-tune a DistilBERT model or detect CSV encoding.")
+group = parser.add_mutually_exclusive_group(required=True) # Ensure one action is chosen
+group.add_argument(
+    "--detect-encoding-only",
+    action="store_true",
+    help="If set, only detect encoding of CSV files and exit."
+)
+group.add_argument(
+    "--run-finetune",
+    action="store_true",
+    help="If set, run the full fine-tuning process."
+)
+args = parser.parse_args()
+
+# Action: Detect encoding only
+if args.detect_encoding_only:
+    csv_files = glob.glob(os.path.join(folder_path, "*.csv"))
+    if not csv_files:
+        print("No CSV files found in the data folder.")
+    else:
+        print("Detecting encoding for all CSV files in 'datasets' folder:")
+        for file_path in csv_files:
+            try:
+                encoding = detect_encoding(file_path)
+                print(f"  - Detected encoding for {os.path.basename(file_path)}: {encoding}")
+            except Exception as e:
+                print(f"  - Error detecting encoding for {os.path.basename(file_path)}: {e}")
+    print("Encoding detection process complete. Exiting.")
+    exit()
+
+# Action: Run fine-tuning (this will only be reached if --run-finetune is true and --detect-encoding-only is false)
+# The fine-tuning code starts here. First, detect encoding for loading data.
+csv_files = glob.glob(os.path.join(folder_path, "*.csv"))
+if not csv_files:
+    raise FileNotFoundError("No CSV files found in the data folder for fine-tuning.")
+
+first_csv = csv_files[0] # Used for encoding detection before loading all files
+encoding = detect_encoding(first_csv)
+print(f"Using detected encoding {encoding} for loading CSV files for fine-tuning.")
+
+dataframes = []
+for file in glob.glob(os.path.join(folder_path, "*.csv")):
+    df = pd.read_csv(file)
+    dataframes.append(df)
+data = pd.concat(dataframes, ignore_index=True)
 
 # Ensure 'text' is string and 'label' is integer
 data["text"] = data["text"].astype(str)
