@@ -5,6 +5,7 @@ from pydantic import BaseModel
 import logging
 import sys
 from pathlib import Path # Added pathlib
+from logging.handlers import RotatingFileHandler # Added for log rotation
 
 app = FastAPI(title='api')
 
@@ -44,17 +45,33 @@ except OSError as e:
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG) # Set the default log level for the logger
 
-file_handler = logging.FileHandler('./classify.log', mode='a')
-file_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+# Define a more robust log file path (e.g., in a 'logs' subdirectory next to the script)
+log_dir = script_dir / "logs"
+log_dir.mkdir(exist_ok=True) # Create the logs directory if it doesn't exist
+log_file_path = log_dir / "classify.log"
+
+# File Handler with Rotation
+# Rotate log file when it reaches 5MB, keep up to 5 backup logs
+file_handler = RotatingFileHandler(log_file_path, maxBytes=5*1024*1024, backupCount=5, mode='a')
+file_formatter = logging.Formatter("%(asctime)s [%(levelname)s] [%(name)s] [%(module)s.%(funcName)s:%(lineno)d] - %(message)s")
 file_handler.setFormatter(file_formatter)
+file_handler.setLevel(logging.INFO) # Log INFO and above to file
 
+# Stream Handler (Console Output)
 stream_handler = logging.StreamHandler(sys.stdout)
-stream_handler.setFormatter(file_formatter)
+# Optionally, use a simpler formatter for the console
+console_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+stream_handler.setFormatter(console_formatter)
+stream_handler.setLevel(logging.DEBUG) # Log DEBUG and above to console
 
 logger.addHandler(file_handler)
 logger.addHandler(stream_handler)
+
+# Silence overly verbose loggers from libraries if needed
+# logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+# logging.getLogger("transformers").setLevel(logging.WARNING)
 
 # Pydantic models
 class UserRequest(BaseModel):
