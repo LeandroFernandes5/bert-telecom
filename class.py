@@ -23,7 +23,7 @@ except OSError as e:
     sys.exit(1)
 
 # Load the fine-tuned model and tokenizer for at-risk prediction
-at_risk_model_path = script_dir / "distilbert-finetuned-at-risk-new" # Path to the at-risk model
+at_risk_model_path = script_dir / "distilbert-finetuned-at-risk" # Path to the at-risk model
 try:
     at_risk_tokenizer = DistilBertTokenizer.from_pretrained(at_risk_model_path)
     at_risk_model = DistilBertForSequenceClassification.from_pretrained(at_risk_model_path)
@@ -88,7 +88,7 @@ class AtRiskRequest(BaseModel):
   answer: str = Query(..., min_length=1, max_length=4096, description="Survey response text to classify for at-risk status")
 
 class AtRiskResponse(BaseModel):
-    predicted_status: int # This will be the class predicted by the at-risk model
+    predicted_status: str # This will be the class predicted by the at-risk model as a string
     unique_id: int
 
 # Pydantic models for the new topic classification endpoint
@@ -177,9 +177,13 @@ async def predict_at_risk_status(at_risk_request: AtRiskRequest):
         
         # Get predicted class (label)
         logits = outputs.logits
-        predicted_status = torch.argmax(logits, dim=1).item()
+        predicted_class = torch.argmax(logits, dim=1).item()
+        
+        # Convert numeric prediction to string label
+        # Assuming 0 = "Not-AtRisk" and 1 = "AtRisk"
+        predicted_status = "AtRisk" if predicted_class == 1 else "Not-AtRisk"
 
-        logger.info(f'Processing at-risk prediction for {unique_id} = predicted status {predicted_status}')
+        logger.info(f'Processing at-risk prediction for {unique_id} = predicted status {predicted_status} (class: {predicted_class})')
 
         return AtRiskResponse(predicted_status=predicted_status, unique_id=unique_id)
     
